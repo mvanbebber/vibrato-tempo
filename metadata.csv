@@ -1,0 +1,4 @@
+file,title,artist,soloist,genre,instrument,bpm
+synth_slow.wav,synth_slow,synthetic,synth voice,test-ballad,voice,
+synth_mid.wav,synth_mid,synthetic,synth voice,test-pop,voice,
+synth_fast.wav,synth_fast,synthetic,synth voice,test-uptempo,voice,176.0

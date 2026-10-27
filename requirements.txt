@@ -1,0 +1,14 @@
+torch>=2.2
+torchaudio>=2.2
+demucs>=4.0.1
+torchcrepe>=0.0.22
+librosa>=0.10.2
+soundfile>=0.12
+scipy>=1.11
+numpy>=1.26
+pandas>=2.1
+matplotlib>=3.8
+pyyaml>=6
+psutil>=5.9
+pytest>=8
+-e .

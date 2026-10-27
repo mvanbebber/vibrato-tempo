@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vibtempo"
+version = "0.1.0"
+description = "Vibrato rate vs. tempo measurement pipeline"
+requires-python = ">=3.10"
+
+[project.scripts]
+vibtempo = "vibtempo.cli:main"
+
+[tool.setuptools]
+packages = ["vibtempo"]

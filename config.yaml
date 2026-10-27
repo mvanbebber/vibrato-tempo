@@ -1,0 +1,109 @@
+# vibtempo configuration — every tunable parameter lives here.
+# All paths are relative to the project root (the folder holding this file),
+# so the project can be synced between machines unchanged.
+
+paths:
+  audio_dir: audio            # input audio (wav / mp3 / flac / m4a / aiff)
+  metadata_csv: metadata.csv  # optional; see README for columns
+  cache_dir: cache            # stems, tempo, pitch tracks, per-song analysis
+  output_dir: output          # CSVs, plots, spot-check clips
+
+hardware:
+  profile: auto        # auto | light | full   (auto: light if RAM < light_below_gb)
+  light_below_gb: 16
+  device: auto         # auto | mps | cuda | cpu  (auto prefers mps, falls back to cpu)
+
+# Settings that differ by profile. Anything here overrides the sections below.
+profiles:
+  light:               # e.g. M1 MacBook Air, 8 GB
+    workers: 1                 # CPU stages one file at a time
+    separation:
+      model: htdemucs
+      segment: 5.0             # seconds per Demucs chunk (smaller = less memory)
+      shifts: 0
+    pitch:
+      crepe_model: tiny
+      batch_size: 256
+  full:                # e.g. M1 Max, 64 GB
+    workers: 6                 # parallel CPU stages (tempo, pyin, analysis)
+    separation:
+      model: htdemucs_ft       # fine-tuned bag of 4; ~4x slower, cleaner vocals
+      segment: 7.8
+      shifts: 1
+    pitch:
+      crepe_model: full
+      batch_size: 2048
+
+separation:
+  enabled: true
+  overlap: 0.25
+  # Stem to analyse for each instrument in the metadata (case-insensitive).
+  # htdemucs / htdemucs_ft give: vocals, drums, bass, other.
+  # Unlisted instruments use default_stem.
+  stem_for_instrument:
+    voice: vocals
+    vocals: vocals
+    vocal: vocals
+    singer: vocals
+    bass: bass
+  default_stem: other
+  # Models ranked best first. A cached stem from the configured model, or from
+  # one ranked above it, is reused, so stems separated on the big machine are
+  # used on the small one (never the reverse).
+  reuse_models: [htdemucs_ft, htdemucs]
+  keep_all_stems: false        # true = save drums/bass/other too (more disk)
+
+tempo:
+  method: librosa_beat         # librosa_beat (beat tracker) | librosa_tempo (global estimate)
+  start_bpm: 120               # prior for the estimator
+  min_bpm: 40
+  max_bpm: 420
+
+pitch:
+  method: crepe                # crepe (torchcrepe) | pyin
+  # Ranked best first; same reuse rule as separation.reuse_models.
+  reuse_crepe_models: [full, tiny]
+  hop_ms: 10
+  fmin_hz: 60
+  fmax_hz: 1500
+  voicing_threshold: 0.5       # CREPE periodicity / pYIN voiced probability
+
+notes:
+  min_note_ms: 300             # shortest sustained note analysed
+  median_filter_frames: 3      # removes single-frame tracker glitches (odd number)
+  max_gap_ms: 30               # bridge unvoiced dropouts this short
+  split_cents: 70              # new note when the vibrato-free contour moves this far
+  edge_trim_ms: 40             # drop onset/release frames from each note
+
+vibrato:
+  rate_min_hz: 3.0
+  rate_max_hz: 10.0
+  rate_step_hz: 0.02           # search resolution before refinement
+  min_cycles: 1.5              # need at least this many cycles in the note
+  min_depth_cents: 15          # peak-to-peak
+  max_depth_cents: 400
+  min_confidence: 0.5          # fraction of detrended pitch variance explained by the sinusoid
+  trend_degree: 2              # polynomial removed from each note before fitting
+
+summary:
+  min_notes_per_song: 3        # fewer accepted notes -> song flagged in summary
+
+# Tempo zones. PLACEHOLDER — replace with the paper's six zone definitions.
+# Note: 50-400 BPM at strict 2:1 steps gives only three zones (50-100-200-400),
+# so these placeholder zones are half-octave (sqrt 2) wide. Edit freely;
+# 'subdivision' is the expected number of vibrato cycles per beat in the zone.
+zones:
+  - {name: Z1, bpm_min: 50.0,  bpm_max: 70.7,  subdivision: 6}
+  - {name: Z2, bpm_min: 70.7,  bpm_max: 100.0, subdivision: 4}
+  - {name: Z3, bpm_min: 100.0, bpm_max: 141.4, subdivision: 3}
+  - {name: Z4, bpm_min: 141.4, bpm_max: 200.0, subdivision: 2}
+  - {name: Z5, bpm_min: 200.0, bpm_max: 282.8, subdivision: 1.5}
+  - {name: Z6, bpm_min: 282.8, bpm_max: 400.0, subdivision: 1}
+target_band_bpm: [300, 420]    # absolute vibrato-rate band shown on plots
+
+validation:
+  match_tolerance_s: 0.5       # note-level ratings: max distance to a tool note
+  min_confidence: null         # null = use vibrato.min_confidence
+
+spotcheck:
+  pad_s: 0.5                   # audio context either side of the note

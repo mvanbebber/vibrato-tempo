@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+# Large / machine-generated. Sync these between Macs with rsync or a cloud
+# folder rather than git (see README).
+cache/
+output/
+audio/
+# synthetic-test byproducts (regenerate with scripts/make_synthetic.py, make_test_configs.py)
+output_test_*/
+config_test_*.yaml
+test_data/solo/
+*.egg-info/
